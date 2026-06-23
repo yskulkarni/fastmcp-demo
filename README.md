@@ -27,9 +27,16 @@ Included tools (example)
   - Returns number squared. Simple numeric utility.
 
 Development notes
-- File: main.py
-  - Creates the FastMCP instance and registers tools/resources at module import time.
-  - Keep tool functions small and well-documented: their docstrings become the tool descriptions used by LLMs.
+- Architecture: The project is organized into tools/ and resources/ directories:
+  - main.py: Creates the FastMCP instance and imports tools/ and resources/ modules to register them.
+  - tools/: Contains tool implementations (geometry.py, math.py, etc.). Each tool's __init__.py registers functions with the global mcp instance.
+  - resources/: Contains resource implementations (system.py, etc.). Each resource's __init__.py registers functions with the global mcp instance.
+- Adding new tools:
+  - Create a new file in tools/ (e.g., tools/stats.py) with your tool function.
+  - Import the function in tools/__init__.py and call mcp.tool()(your_function) to register it.
+- Adding new resources:
+  - Create a new file in resources/ (e.g., resources/environment.py) with your resource function.
+  - Import the function in resources/__init__.py and call mcp.resource("scheme://id")(your_function) to register it.
 - Tests: none included. If adding tests, prefer pytest and add it to pyproject.toml.
 - Linting/Formatting: none configured. Consider ruff/black for CI and local checks; add commands to pyproject and .github workflows when enabled.
 

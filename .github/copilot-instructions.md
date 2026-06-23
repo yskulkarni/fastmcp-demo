@@ -20,25 +20,29 @@ Tests and linting
   - black . --check
 
 High-level architecture (big picture)
-- Tiny demo FastMCP server exposing programmatic "tools" and "resources":
-  - main.py constructs FastMCP("Developer Utility Server") and registers functions with decorators:
-    - @mcp.tool() → registers a callable as a tool callable by the LLM
-    - @mcp.resource("scheme://name") → exposes static contextual data
-  - mcp.run() (in __main__) starts the server loop.
-- Intent: host single-file tool/resource definitions that the MCP runtime exposes to LLMs. Keep logic and I/O minimal and explicit.
+- Modular FastMCP server organized into tools/ and resources/ directories:
+  - main.py: Creates FastMCP instance, imports tools and resources modules to auto-register them, and runs the server loop.
+  - tools/ directory: Contains tool implementations (geometry.py, math.py, etc.). Tools are registered in tools/__init__.py by importing mcp from main and calling mcp.tool() decorator.
+  - resources/ directory: Contains resource implementations (system.py, etc.). Resources are registered in resources/__init__.py by importing mcp from main and calling mcp.resource() decorator.
+  - Registration pattern: Each submodule's __init__.py imports the mcp instance from main.py and decorates functions to register them, ensuring tools and resources are available to the LLM when main.py imports the modules.
+- Intent: Keep tools and resources organized by type, scalable for future additions. Logic remains simple and explicit.
 
 Key conventions and repository-specific patterns
-- Decorators are the primary integration surface:
-  - Use @mcp.tool() for functions intended as LLM-invokable tools. Type annotations (arg and return types) and docstrings are used as the tool signature/description.
-  - Use @mcp.resource("scheme://id") for static contextual data; resource identifiers follow a scheme://name style (e.g., system://os-info).
+- Module organization:
+  - tools/: Place each tool in its own file (geometry.py, math.py, etc.) for clarity and maintainability.
+  - resources/: Place each resource in its own file (system.py, etc.).
+  - Each directory's __init__.py imports mcp from main.py and registers its functions using @mcp.tool() or @mcp.resource() decorators.
+- Registration in submodules:
+  - tools/__init__.py and resources/__init__.py import the global mcp instance and manually call mcp.tool() or mcp.resource() on function objects to register them.
+  - This pattern allows tools and resources to live in focused modules while maintaining registration at import time.
 - Function docstrings are the authoritative short description for tools — keep them concise and focused for good prompt generation.
 - Prefer simple, small functions as tools (pure/side-effect-free where possible) to keep behaviour predictable for LLM callers.
-- Keep module-level registration (mcp = FastMCP(...)) in main.py; additional modules may import the mcp instance to register more tools/resources.
 
 Files checked and notes
 - pyproject.toml contains project metadata and runtime dependencies (fastmcp, mcp[cli]) and declares python >=3.14.
-- README.md is present but minimal.
-- No CONTRIBUTING.md, test config, or AI assistant config files (CLAUDE.md, AGENTS.md, .cursorrules, etc.) were found.
+- README.md contains project overview and getting started instructions.
+- Repository is now organized into tools/ and resources/ directories with __init__.py registration modules.
+- No CONTRIBUTING.md, test config, or other AI assistant config files (CLAUDE.md, AGENTS.md, .cursorrules, etc.) were found.
 
 If you add more components
 - If you add a tests/ suite: include pytest in pyproject and add a short section here with the project test command and examples for running single tests.
