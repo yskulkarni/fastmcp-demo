@@ -21,20 +21,20 @@ Tests and linting
 
 High-level architecture (big picture)
 - Modular FastMCP server organized into tools/ and resources/ directories:
-  - main.py: Creates FastMCP instance, imports tools and resources modules to auto-register them, and runs the server loop.
-  - tools/ directory: Contains tool implementations (geometry.py, math.py, etc.). Tools are registered in tools/__init__.py by importing mcp from main and calling mcp.tool() decorator.
-  - resources/ directory: Contains resource implementations (system.py, etc.). Resources are registered in resources/__init__.py by importing mcp from main and calling mcp.resource() decorator.
-  - Registration pattern: Each submodule's __init__.py imports the mcp instance from main.py and decorates functions to register them, ensuring tools and resources are available to the LLM when main.py imports the modules.
-- Intent: Keep tools and resources organized by type, scalable for future additions. Logic remains simple and explicit.
+  - main.py: Creates FastMCP instance, imports tools and resources modules (which auto-registers all decorated functions), and runs the server loop.
+  - tools/ directory: Contains tool implementations (geometry.py, math.py, etc.). Each tool function uses the @mcp.tool() decorator at definition time for automatic registration.
+  - resources/ directory: Contains resource implementations (system.py, etc.). Each resource function uses the @mcp.resource("scheme://id") decorator at definition time for automatic registration.
+  - Registration pattern: When each tool/resource module is imported, functions decorated with @mcp.tool() or @mcp.resource() are automatically registered with the global mcp instance from main.py.
+- Intent: Keep tools and resources organized by type, scalable for future additions. Decorators are applied at function definition, not post-hoc, ensuring proper registration.
 
 Key conventions and repository-specific patterns
 - Module organization:
   - tools/: Place each tool in its own file (geometry.py, math.py, etc.) for clarity and maintainability.
   - resources/: Place each resource in its own file (system.py, etc.).
-  - Each directory's __init__.py imports mcp from main.py and registers its functions using @mcp.tool() or @mcp.resource() decorators.
-- Registration in submodules:
-  - tools/__init__.py and resources/__init__.py import the global mcp instance and manually call mcp.tool() or mcp.resource() on function objects to register them.
-  - This pattern allows tools and resources to live in focused modules while maintaining registration at import time.
+  - Each tool/resource file imports mcp from main and uses @mcp.tool() or @mcp.resource("scheme://id") decorators at function definition time.
+- Registration at definition time:
+  - Tools and resources are registered via decorators applied directly to function definitions in their respective module files, not in __init__.py.
+  - tools/__init__.py and resources/__init__.py simply import the decorated functions (which auto-register) and re-export them for clarity.
 - Function docstrings are the authoritative short description for tools — keep them concise and focused for good prompt generation.
 - Prefer simple, small functions as tools (pure/side-effect-free where possible) to keep behaviour predictable for LLM callers.
 

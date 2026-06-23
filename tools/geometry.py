@@ -1,3 +1,7 @@
+from main import mcp
+
+
+@mcp.tool()
 def calculate_rectangle_area(width: float, height: float) -> float:
     """
     Calculates the area of a rectangle. Use this tool whenever the user
@@ -8,3 +12,4 @@ def calculate_rectangle_area(width: float, height: float) -> float:
         height: The vertical length of the box or room.
     """
     return width * height
+
